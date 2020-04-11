@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editar celular</title>
+</head>
+
+<body>
+    <h1>Editar celular</h1>
+    <form action="/celulares/<%=celular.id%>/editar?_method=PUT" method="POST" enctype="multipart/form-data">
+        <input type="text" name="nome" value="<%= celular.nome %> " /><br /><br />
+        <input type="number" name="preco" id="preco" placeholder="Preço" value="<%= celular.preco %>" />
+        <br /><br />
+        <h3>Imagem do Celular</h3>
+        <input type="file" name="imagem" id="imagem" />
+
+        <br /><br />
+        <button type="submit">Editar</button>
+    </form>
+</body>
+
+</html>

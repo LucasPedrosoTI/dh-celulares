@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Criar celular</title>
+</head>
+
+<body>
+    <h1>Criar celular</h1>
+
+    <form action="/celulares/criar" method="POST" enctype="multipart/form-data">
+        <input type="text" name="nome" placeholder="Nome" /><br /><br />
+        <input type="number" name="preco" id="preco" placeholder="Preço" />
+        <br /><br />
+
+        <h3>Imagem do Celular</h3>
+        <input type="file" name="imagem" id="imagem" />
+
+        <br /><br />
+        <button type="submit">Criar</button>
+    </form>
+</body>
+
+</html>

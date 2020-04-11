@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lista de Celulares</title>
+</head>
+
+<body>
+    <h1>Lista de Celulares</h1>
+
+    <form action="/celulares/filtro" method="GET">
+        <input type="search" name="max" id="max" />
+        <button type="submit">
+        Filtrar preço máximo
+      </button>
+    </form>
+    <form action="/celulares" method="get">
+        <button type="submit">Limpar filtro</button>
+    </form>
+    <br />
+
+    <form action="/celulares/class" method="get">
+        <input type="hidden" name="minToMax" value="true" />
+        <button type="submit">Menor Preço Primeiro</button>
+    </form>
+    <br />
+    <form action="/celulares/class" method="get">
+        <input type="hidden" name="maxToMin" value="true" />
+        <button type="submit">Maior Preço Primeiro</button>
+    </form>
+    <br />
+    <form action="/celulares/class" method="get">
+        <input type="hidden" name="alfabetica" value="true" />
+        <button type="submit">Ordem Alfabética</button>
+    </form>
+
+    <p>
+        <a href="/celulares/criar">Adicionar um celular</a>
+    </p>
+
+    <table border="1" cellpadding="10">
+        <% celulares.forEach(celular => { %>
+            <tr>
+                <td>
+                    <img src="<%= celular.img %>" alt="<%= celular.nome %>" height="100" width="100" />
+                </td>
+                <td>
+                    <%= celular.nome %>
+                </td>
+                <td>
+                    <%= celular.preco.toLocaleString('pt-br', { minimumFractionDigits: 2,
+          style: 'currency', currency: 'BRL' }) %>
+                </td>
+                <td>
+                    <a href="/celulares/<%= celular.id %>/editar">Editar</a>
+                </td>
+                <td>
+                    <form method="POST" action="/celulares/deletar/<%=celular.id%>?_method=DELETE">
+                        <button type="submit">Deletar</button>
+                    </form>
+                </td>
+            </tr>
+            <% }) %>
+    </table>
+</body>
+
+</html>
