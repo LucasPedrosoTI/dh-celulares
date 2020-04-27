@@ -8,13 +8,25 @@
 </head>
 
 <body>
-    <h1>Login</h1>
-    <form action="/signup" method="post">
-        <input type="text" name="username" id="username" placeholder="username" />
-        <input type="password" name="senha" id="senha" placeholder="senha" />
+    <h1>Sign-up</h1>
 
-        <button type="submit">Cadastrar</button>
-    </form>
+    <% if (typeof(errors) != "undefined") { %> ERROR
+
+        <ul>
+            <% errors.forEach(error => { %>
+                <li>
+                    <%= error.msg %>
+                </li>
+                <% }) %>
+        </ul>
+        <% } %>
+
+            <form action="/signup" method="post">
+                <input type="text" name="username" id="username" placeholder="username" />
+                <input type="password" name="senha" id="senha" placeholder="senha" />
+
+                <button type="submit">Cadastrar</button>
+            </form>
 </body>
 
 </html>

@@ -1,101 +1,304 @@
-const celulares = require("../database/celulares.json");
-const path = require("path");
-const fs = require("fs");
+const Sequelize = require("sequelize");
+const config = require("../config/database");
+const { Celular } = require("../models");
 
-let database = path.join("database", "celulares.json");
+const db = new Sequelize(config);
 
 module.exports = {
-    listarCelulares: (req, res) => {
-        res.render("listarCelulares", { celulares });
-    },
-    viewForm: (req, res) => {
-        res.render("criarCelular");
-    },
-    salvarForm: (req, res) => {
-        let { nome, preco } = req.body;
-        let id = celulares[celulares.length - 1].id + 1;
-        let img = `/images/${req.files[0].filename}`;
+  listarCelulares: async (req, res) => {
+    let { page = 1, order = "id-asc", max, key = "" } = req.query;
 
-        // cria o obejto com os dados recebidos do FORM
-        let celular = {
-            id,
-            nome,
-            preco: Number(preco),
-            img,
-        };
+    let mostExpensive = await Celular.max("preco"); //retorna o produto mais caro do DB
 
-        // ADICIONA O OBJETO AO JSON
-        celulares.push(celular);
+    max = max || mostExpensive; // atribui a max o produto mais caro, caso não tenha sido passado esse parametro no filtro de preço.
 
-        // SALVAR O ARRAY DE CELULARES NO JSON
-        fs.writeFileSync(database, JSON.stringify(celulares));
+    let classify = order.split("-"); // converte a string passada no input order em um array separando pelo hífen, sendo o resultado, o array aceito pelo sequelize para ordenar
 
-        // Redirecionar o usuário para a lista de celulares
-        res.redirect("/celulares");
-    },
-    viewAttForm: (req, res) => {
-        let { id } = req.params;
+    let { count: total, rows: celulares } = await Celular.findAndCountAll({
+      limit: 5,
+      offset: (page - 1) * 5,
+      where: {
+        nome: {
+          [Sequelize.Op.like]: `%${key}%`,
+        },
+        preco: {
+          [Sequelize.Op.lte]: max,
+        },
+      },
+      order: [classify],
+    });
 
-        let celular = celulares.find((cel) => cel.id == id);
+    let totalPagina = Math.ceil(total / 5);
 
-        res.render("editarCelular", { celular });
-    },
-    store: (req, res) => {
-        let { nome, preco } = req.body;
-        let { id } = req.params;
-        let img = `/images/${req.files[0].filename}`;
+    res.render("listarCelulares", {
+      max,
+      celulares,
+      usuario: req.session.usuario,
+      totalPagina,
+      order,
+      key,
+    });
+  },
+  viewForm: (req, res) => {
+    res.render("criarCelular");
+  },
+  salvarForm: async (req, res) => {
+    let celulares = await Celular.findAll();
 
-        let celular = celulares.find((cel) => cel.id == id);
-        celular.nome = nome;
-        celular.preco = Number(preco);
-        celular.img = img;
+    let { nome, preco } = req.body;
+    let id = celulares[celulares.length - 1].id + 1;
+    let img = `/images/${req.files[0].filename}`;
 
-        fs.writeFileSync(database, JSON.stringify(celulares));
+    // cria o obejto com os dados recebidos do FORM
 
-        res.redirect("/celulares");
-    },
-    destroy: (req, res) => {
-        let { id } = req.params;
+    await db.query("INSERT INTO celulares VALUES (:id, :nome, :preco, :img)", {
+      replacements: {
+        id,
+        nome,
+        preco,
+        img,
+      },
+      type: Sequelize.QueryTypes.INSERT,
+    });
 
-        celulares.splice(
-            celulares.findIndex((e) => e.id == id),
-            1
-        );
+    // let celular = {
+    //   id,
+    //   nome,
+    //   preco: Number(preco),
+    //   img,
+    // };
 
-        fs.writeFileSync(database, JSON.stringify(celulares));
+    // // ADICIONA O OBJETO AO JSON
+    // celulares.push(celular);
 
-        res.redirect("/celulares");
-    },
-    priceFilter: (req, res) => {
-        let { max } = req.query;
+    // // SALVAR O ARRAY DE CELULARES NO JSON
+    // fs.writeFileSync(database, JSON.stringify(celulares));
 
-        let celularesFiltrados = celulares.filter((celular) => celular.preco < max);
+    // // Redirecionar o usuário para a lista de celulares
+    res.redirect("/celulares");
+  },
+  viewAttForm: async (req, res) => {
+    let celulares = await Celular.findAll();
 
-        res.render("listarCelulares", { celulares: celularesFiltrados });
-    },
-    class: (req, res) => {
-        // MÉTODO PARA CLASSIFICAR POR PREÇO
+    let { id } = req.params;
 
-        let { minToMax, maxToMin, alfabetica } = req.query;
+    let celular = celulares.find((cel) => cel.id == id);
 
-        if (minToMax) {
-            let result = celulares.sort((a, b) => a.preco - b.preco);
-            res.render("listarCelulares", { celulares: result });
-        } else if (maxToMin) {
-            let result = celulares.sort((a, b) => b.preco - a.preco);
-            res.render("listarCelulares", { celulares: result });
-        } else if (alfabetica) {
-            let result = celulares.sort((a, b) => a.nome.localeCompare(b.nome));
-            res.render("listarCelulares", { celulares: result });
-        } else {
-            return res.render("listarCelulares", { celulares });
-        }
-    },
-    ver: (req, res) => {
-        let dados = fs.readFileSync(database, { encoding: "utf-8" });
+    res.render("editarCelular", { celular });
+  },
 
-        dados = JSON.parse(dados);
+  store: async (req, res) => {
+    let { nome, preco } = req.body;
+    let { id } = req.params;
+    let img;
 
-        res.send(dados);
-    },
+    const celular = await Celular.findByPk(id);
+
+    // const [celular] = await db.query("SELECT * FROM celulares WHERE id = :id", {
+    //   replacements: {
+    //     id,
+    //   },
+    //   type: Sequelize.QueryTypes.SELECT,
+    // });
+
+    preco = preco || celular.preco;
+
+    req.files[0]
+      ? (img = `/images/${req.files[0].filename}`)
+      : (img = celular.img);
+
+    await db.query(
+      "UPDATE celulares SET nome = :nome, preco = :preco, img = :img WHERE id = :id",
+      {
+        replacements: {
+          nome,
+          preco,
+          img,
+          id,
+        },
+        type: Sequelize.QueryTypes.UPDATE,
+      }
+    );
+
+    // let celular = celulares.find((cel) => cel.id == id);
+    // celular.nome = nome;
+    // celular.preco = Number(preco);
+    // celular.img = img;
+
+    // fs.writeFileSync(database, JSON.stringify(celulares));
+
+    res.redirect("/celulares");
+  },
+
+  destroy: async (req, res) => {
+    let { id } = req.params;
+
+    await db.query("DELETE FROM celulares WHERE id = :id", {
+      replacements: { id },
+      type: Sequelize.QueryTypes.DELETE,
+    });
+
+    // celulares.splice(
+    //   celulares.findIndex((e) => e.id == id),
+    //   1
+    // );
+
+    // fs.writeFileSync(database, JSON.stringify(celulares));
+
+    res.redirect("/celulares");
+  },
+  // priceFilter: async (req, res) => {
+  //   let { max, order = null } = req.query;
+
+  //   let { page = 1 } = req.query;
+
+  //   let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //     limit: 5,
+  //     offset: (page - 1) * 5,
+  //     where: {
+  //       preco: {
+  //         [Sequelize.Op.lte]: max,
+  //       },
+  //     },
+  //   });
+
+  //   let totalPagina = Math.ceil(total / 5);
+  //   console.log(total);
+
+  //   // const celularesFiltrados = await db.query(
+  //   //   "SELECT * FROM celulares WHERE preco <= :max",
+  //   //   {
+  //   //     replacements: { max },
+  //   //     type: Sequelize.QueryTypes.SELECT,
+  //   //   }
+  //   // );
+
+  //   // let celularesFiltrados = celulares.filter((celular) => celular.preco < max);
+
+  //   res.render("listarCelulares", {
+  //     usuario: req.session.usuario,
+  //     celulares,
+  //     totalPagina,
+  //     order,
+  //   });
+  // },
+  // class: async (req, res) => {
+  //   let { minToMax, maxToMin, alfabetica } = req.query;
+  //   let { page = 1 } = req.query;
+
+  //   // let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //   //   limit: 5,
+  //   //   offset: (page - 1) * 5,
+  //   // });
+
+  //   // let totalPagina = Math.ceil(total / 5);
+  //   console.log(total);
+  //   // MÉTODO PARA CLASSIFICAR POR PREÇO
+
+  //   if (minToMax) {
+  //     let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //       limit: 5,
+  //       offset: (page - 1) * 5,
+  //       order: [["preco", "ASC"]],
+  //     });
+  //     let totalPagina = Math.ceil(total / 5);
+  //     console.log(total);
+
+  //     // let result = celulares.sort((a, b) => a.preco - b.preco);
+
+  //     res.render("listarCelulares", {
+  //       usuario: req.session.usuario,
+  //       celulares,
+  //       totalPagina,
+  //     });
+  //   } else if (maxToMin) {
+  //     let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //       limit: 5,
+  //       offset: (page - 1) * 5,
+  //       order: [["preco", "DESC"]],
+  //     });
+  //     let totalPagina = Math.ceil(total / 5);
+  //     console.log(total);
+
+  //     // let result = celulares.sort((a, b) => b.preco - a.preco);
+  //     res.render("listarCelulares", {
+  //       usuario: req.session.usuario,
+  //       celulares,
+  //       totalPagina,
+  //     });
+  //   } else if (alfabetica) {
+  //     let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //       limit: 5,
+  //       offset: (page - 1) * 5,
+  //       order: [["nome", "ASC"]],
+  //     });
+  //     let totalPagina = Math.ceil(total / 5);
+  //     console.log(total);
+  //     // let result = celulares.sort((a, b) => a.nome.localeCompare(b.nome));
+  //     res.render("listarCelulares", {
+  //       usuario: req.session.usuario,
+  //       celulares,
+  //       totalPagina,
+  //     });
+  //   } else {
+  //     let { count: total, rows: celulares } = await Celular.findAndCountAll({
+  //       limit: 5,
+  //       offset: (page - 1) * 5,
+  //     });
+
+  //     let totalPagina = Math.ceil(total / 5);
+  //     console.log(total);
+  //     return res.render("listarCelulares", {
+  //       usuario: req.session.usuario,
+  //       celulares,
+  //       totalPagina,
+  //     });
+  //   }
+  // },
+  detalhe: async (req, res) => {
+    let { id } = req.params;
+
+    let celular = await Celular.findByPk(id);
+
+    res.render("detalhes", { celular });
+  },
+  search: async (req, res) => {
+    let { key, max = 200000, order = "id-asc", page = 1 } = req.query;
+
+    let classify = order.split("-");
+
+    let { count: total, rows: celulares } = await Celular.findAndCountAll({
+      limit: 5,
+      offset: (page - 1) * 5,
+      where: {
+        preco: {
+          [Sequelize.Op.lte]: max,
+        },
+        nome: {
+          [Sequelize.Op.like]: `%${key}%`,
+        },
+      },
+      order: [classify],
+    });
+
+    let totalPagina = Math.ceil(total / 5);
+    console.log(total);
+
+    // let celulares = await Celular.findAll({
+    //   where: {
+    //     nome: {
+    //       [Sequelize.Op.like]: `%${key}%`,
+    //     },
+    //   },
+    // });
+    // return res.send(celulares);
+    res.render("listarCelulares", {
+      max,
+      celulares,
+      usuario: req.session.usuario,
+      totalPagina,
+      order,
+      key,
+    });
+  },
 };
