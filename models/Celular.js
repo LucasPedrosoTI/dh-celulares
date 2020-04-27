@@ -7,8 +7,14 @@ module.exports = (sequelize, DataType) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      nome: DataType.STRING,
-      preco: DataType.DECIMAL(10, 2),
+      nome: {
+        type: DataType.STRING,
+        allowNull: false,
+      },
+      preco: {
+        type: DataType.DECIMAL(10, 2),
+        allowNull: false,
+      },
       img: DataType.STRING,
     },
     {

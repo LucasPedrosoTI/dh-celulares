@@ -55,7 +55,7 @@ module.exports = {
       replacements: {
         id,
         nome,
-        preco,
+        preco: Number(preco),
         img,
       },
       type: Sequelize.QueryTypes.INSERT,
