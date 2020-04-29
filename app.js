@@ -8,7 +8,7 @@ var session = require("express-session");
 
 var indexRouter = require("./routes/routes"); // MIDDLEWARE DE ROTEAMENTO
 var log = require("./middlewares/logSite"); // AULA MIDDLEWARE CRIADO A NÍVEL DE APLICAÇÃO
-var cookieLogin = require("./middlewares/cookieLogin"); // AULA MIDDLEWARE CRIADO A NÍVEL DE APLICAÇÃO
+// var cookieLogin = require("./middlewares/cookieLogin"); // AULA MIDDLEWARE CRIADO A NÍVEL DE APLICAÇÃO
 
 var app = express();
 
@@ -21,6 +21,7 @@ app.use(
     secret: "projetoCelulares",
     resave: true,
     saveUninitialized: true,
+    cookie: { maxAge: 3600000 },
   })
 );
 app.use(logger("dev"));
@@ -29,7 +30,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public"))); // GARANTE QUE A PASTA PUBLIC SERÁ ACESSAR
 app.use(methodOverride("_method")); //MIDDLEWARE PARA O USO DE METHOD OVERRIDE, REQUISIÇÕES PUT E DELETE
-app.use(cookieLogin);
+// app.use(cookieLogin);
 app.use(log.logSite); // AULA MIDDLEWARE CRIADO A NÍVEL DE APLICAÇÃO
 
 app.use("/", indexRouter); // MIDDLEWARE DE ROTEAMENTO

@@ -1,56 +1,110 @@
-const path = require("path");
-const fs = require("fs");
-const users = require("../database/admin.json");
 const bcrypt = require("bcrypt");
-const { check, validationResult, body } = require("express-validator");
-
-let database = path.join("database", "admin.json");
+const { validationResult } = require("express-validator");
+const { Admin } = require("../models");
+// const path = require("path");
+// const fs = require("fs");
+// const users = require("../database/admin.json");
+// let database = path.join("database", "admin.json");
 
 module.exports = {
-    login: (req, res) => {
-        res.render("login");
-    },
-    entrar: (req, res) => {
-        let { username, senha, logado } = req.body;
+  login: (req, res) => {
+    res.render("login");
+  },
+  entrar: async (req, res) => {
+    let { username, senha, logado } = req.body;
 
-        let user = users.find(
-            (user) =>
-            user.username == username && bcrypt.compareSync(senha, user.senha)
-        );
+    if (!username || !senha) {
+      return res.status(400).send("Request missing username or password param");
+    }
 
-        if (!user) {
-            return res.send("Usuário ou Senha inválida");
-        }
+    try {
+      let users = await Admin.findAll();
 
-        req.session.usuario = user;
+      let user = users.find(
+        (user) =>
+          user.username == username && bcrypt.compareSync(senha, user.senha)
+      );
 
-        if (logado != undefined) {
-            res.cookie("logado", user.username, { maxAge: 600000 });
-        }
+      if (!user) {
+        return res.send("Usuário ou Senha inválida");
+      }
 
-        res.redirect("/celulares");
-    },
-    signup: (req, res) => {
-        res.render("signup");
-    },
-    cadastrar: (req, res) => {
-        let listaDeErros = validationResult(req);
+      req.session.usuario = user;
 
-        if (listaDeErros.isEmpty()) {
-            let hash = bcrypt.hashSync(req.body.senha, 10);
+      if (logado != undefined) {
+        res.cookie("logado", user.username, { maxAge: 3600000 });
+      }
 
-            let newUser = {
-                username: req.body.username,
-                senha: hash,
-            };
+      res.redirect("/celulares");
+    } catch (err) {
+      return res.status(400).send("invalid username or password");
+    }
 
-            users.push(newUser);
+    // bcrypt.compareSync(senha, user.senha);
 
-            fs.writeFileSync(database, JSON.stringify(users));
+    // // let user =  await Admin.findOne({ where: { username, senha: senha })
 
-            res.redirect("/login");
-        } else {
-            res.render("signup", { errors: listaDeErros.errors });
-        }
-    },
+    // let user = users.find(
+    //   (user) =>
+    //     user.username == username && bcrypt.compareSync(senha, user.senha)
+    // );
+
+    // if (!user) {
+    //   return res.send("Usuário ou Senha inválida");
+    // }
+
+    // req.session.usuario = user;
+
+    // if (logado != undefined) {
+    //   res.cookie("logado", user.username, { maxAge: 600000 });
+    // }
+
+    // res.redirect("/celulares");
+  },
+  signup: (req, res) => {
+    res.render("signup");
+  },
+  cadastrar: async (req, res) => {
+    let listaDeErros = validationResult(req);
+
+    if (listaDeErros.isEmpty()) {
+      let hash = bcrypt.hashSync(req.body.senha, 10);
+
+      try {
+        // create a new user with the password hash from bcrypt
+        let user = await Admin.create({
+          username: req.body.username,
+          senha: hash,
+        });
+
+        return res.render("login", { user });
+      } catch (err) {
+        return res.status(400).send(err);
+      }
+
+      //   await Admin.create({
+      //     username: req.body.username,
+      //     senha: hash,
+      //   });
+
+      //   let newUser = {
+      //     username: req.body.username,
+      //     senha: hash,
+      //   };
+
+      //   users.push(newUser);
+
+      //   fs.writeFileSync(database, JSON.stringify(users));
+
+      //   res.redirect("/login");
+    } else {
+      res.render("signup", { errors: listaDeErros.errors });
+    }
+  },
+  logout: (req, res) => {
+    req.session.destroy();
+    req.session = null;
+    // req.cookies.set("testtoken", { expires: Date.now() });
+    res.redirect("/login");
+  },
 };

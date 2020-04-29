@@ -57,21 +57,18 @@ module.exports = {
   },
   //------------------------------------------------------SALVAR NOVO CELULAR NO DB------------------------------------------------------//
   salvarForm: async (req, res) => {
-    let celulares = await Celular.findAll();
-
     let { nome, preco } = req.body;
-    let id = celulares[celulares.length - 1].id + 1;
     let img = `/images/${req.files[0].filename}`;
 
-    // cria o obejto com os dados recebidos do FORM
+    //-----------------------------cria o obejto com os dados recebidos do FORM-----------------------------//
 
     await Celular.create({
-      id,
       nome,
       preco: Number(preco),
       img,
     });
 
+    // let celulares = await Celular.findAll();
     // await db.query("INSERT INTO celulares VALUES (:id, :nome, :preco, :img)", {
     //   replacements: {
     //     id,
@@ -81,6 +78,8 @@ module.exports = {
     //   },
     //   type: Sequelize.QueryTypes.INSERT,
     // });
+
+    // let id = celulares[celulares.length - 1].id + 1;
 
     // let celular = {
     //   id,

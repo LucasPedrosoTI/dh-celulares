@@ -20,12 +20,12 @@ router.get("/estudantes", estudanteController.index);
 router.get("/contato", estudanteController.viewContato);
 router.get("/confirmarcontato", estudanteController.confirmarContato);
 
-router.get("/celulares", celularController.listarCelulares);
+router.get("/celulares", auth, celularController.listarCelulares);
 // router.get("/celulares/filtro", celularController.priceFilter);
 // router.get("/celulares/class", celularController.class);
-router.get("/celulares/search", celularController.search);
+router.get("/celulares/search", auth, celularController.search);
 
-router.get("/celulares/criar", celularController.viewForm);
+router.get("/celulares/criar", auth, celularController.viewForm);
 router.post(
   "/celulares/criar",
   [check("nome").isLength({ min: 1 }).withMessage("Deve conter um nome")],
@@ -33,7 +33,7 @@ router.post(
   log.logDB,
   celularController.salvarForm
 );
-router.get("/celulares/:id/editar", celularController.viewAttForm);
+router.get("/celulares/:id/editar", auth, celularController.viewAttForm);
 
 router.put(
   "/celulares/:id/editar",
@@ -43,7 +43,7 @@ router.put(
 );
 router.delete("/celulares/deletar/:id", celularController.destroy);
 
-router.get("/celulares/:id", celularController.detalhe);
+router.get("/celulares/:id", auth, celularController.detalhe);
 
 router.get("/login", admController.login);
 router.post("/login", admController.entrar);
@@ -61,5 +61,7 @@ router.post(
   ],
   admController.cadastrar
 );
+
+router.get("/logout", admController.logout);
 
 module.exports = router;

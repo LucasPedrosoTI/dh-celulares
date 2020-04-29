@@ -1,5 +1,14 @@
 require("dotenv").config();
-//mysql://bb4a029cba3986:f732445b@us-cdbr-iron-east-01.cleardb.net/heroku_bdef586a5063294?reconnect=true
+
+// const config = {
+//   username: process.env.DB_USER,
+//   password: process.env.DB_PASS,
+//   database: process.env.DB_NAME,
+//   host: process.env.DB_HOST,
+//   port: process.env.DB_PORT,
+//   dialect: "mysql",
+// };
+
 const config = {
   username: "bb4a029cba3986",
   password: "f732445b",
