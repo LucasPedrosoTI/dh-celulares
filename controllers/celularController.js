@@ -5,30 +5,41 @@ const { Celular } = require("../models");
 const db = new Sequelize(config);
 
 module.exports = {
+  //------------------------------------------------------PÁGINA PRINCIPAL------------------------------------------------------//
   listarCelulares: async (req, res) => {
     let { page = 1, order = "id-asc", max, key = "" } = req.query;
 
-    let mostExpensive = await Celular.max("preco"); //retorna o produto mais caro do DB
+    let mostExpensive = await Celular.max("preco"); //retorna o produto mais caro do model
+
+    let cheapest = await Celular.min("preco"); // retorna o menor preco
+
+    // busca no DB o produto com o menor preco encontrado
+    let cheapestProduct = await Celular.findOne({
+      where: {
+        preco: cheapest,
+      },
+    });
 
     max = max || mostExpensive; // atribui a max o produto mais caro, caso não tenha sido passado esse parametro no filtro de preço.
 
     let classify = order.split("-"); // converte a string passada no input order em um array separando pelo hífen, sendo o resultado, o array aceito pelo sequelize para ordenar
 
+    // busca no db todos os produtos e conta o total ao mesmo tempo para paginação
     let { count: total, rows: celulares } = await Celular.findAndCountAll({
       limit: 5,
       offset: (page - 1) * 5,
       where: {
         nome: {
-          [Sequelize.Op.like]: `%${key}%`,
+          [Sequelize.Op.like]: `%${key}%`, // por padrão sempre haverá uma key, o default é uma string vazia
         },
         preco: {
-          [Sequelize.Op.lte]: max,
+          [Sequelize.Op.lte]: max, // por padrão sempre haverá um preço máximo, o default sempre será igual ao produto mais caro
         },
       },
-      order: [classify],
+      order: [classify], // a classificação padrão é id ASC,
     });
 
-    let totalPagina = Math.ceil(total / 5);
+    let totalPagina = Math.ceil(total / 5); // calcula quantas paginas serão necessárias de acordo com o total de produtos encontrados
 
     res.render("listarCelulares", {
       max,
@@ -37,11 +48,14 @@ module.exports = {
       totalPagina,
       order,
       key,
+      cheapestProduct,
     });
   },
+  //------------------------------------------------------PÁGINA CRIAR NOVO CELULAR------------------------------------------------------//
   viewForm: (req, res) => {
     res.render("criarCelular");
   },
+  //------------------------------------------------------SALVAR NOVO CELULAR NO DB------------------------------------------------------//
   salvarForm: async (req, res) => {
     let celulares = await Celular.findAll();
 
@@ -51,15 +65,22 @@ module.exports = {
 
     // cria o obejto com os dados recebidos do FORM
 
-    await db.query("INSERT INTO celulares VALUES (:id, :nome, :preco, :img)", {
-      replacements: {
-        id,
-        nome,
-        preco: Number(preco),
-        img,
-      },
-      type: Sequelize.QueryTypes.INSERT,
+    await Celular.create({
+      id,
+      nome,
+      preco: Number(preco),
+      img,
     });
+
+    // await db.query("INSERT INTO celulares VALUES (:id, :nome, :preco, :img)", {
+    //   replacements: {
+    //     id,
+    //     nome,
+    //     preco: Number(preco),
+    //     img,
+    //   },
+    //   type: Sequelize.QueryTypes.INSERT,
+    // });
 
     // let celular = {
     //   id,
@@ -77,6 +98,7 @@ module.exports = {
     // // Redirecionar o usuário para a lista de celulares
     res.redirect("/celulares");
   },
+  //------------------------------------------------------RENDER FORM DE ALTERAÇÃO------------------------------------------------------//
   viewAttForm: async (req, res) => {
     let celulares = await Celular.findAll();
 
@@ -86,13 +108,27 @@ module.exports = {
 
     res.render("editarCelular", { celular });
   },
-
+  //------------------------------------------------------SALVAR ALTERAÇÃÕES NO DB------------------------------------------------------//
   store: async (req, res) => {
     let { nome, preco } = req.body;
     let { id } = req.params;
     let img;
 
     const celular = await Celular.findByPk(id);
+
+    // SE NENHUM DADO FOR PASSSADO NO INPUT, MANTÉM OS DADOS
+    nome = nome || celular.nome;
+    preco = preco || celular.preco;
+
+    req.files[0]
+      ? (img = `/images/${req.files[0].filename}`)
+      : (img = celular.img);
+
+    await celular.update({
+      nome,
+      preco,
+      img,
+    });
 
     // const [celular] = await db.query("SELECT * FROM celulares WHERE id = :id", {
     //   replacements: {
@@ -101,24 +137,18 @@ module.exports = {
     //   type: Sequelize.QueryTypes.SELECT,
     // });
 
-    preco = preco || celular.preco;
-
-    req.files[0]
-      ? (img = `/images/${req.files[0].filename}`)
-      : (img = celular.img);
-
-    await db.query(
-      "UPDATE celulares SET nome = :nome, preco = :preco, img = :img WHERE id = :id",
-      {
-        replacements: {
-          nome,
-          preco,
-          img,
-          id,
-        },
-        type: Sequelize.QueryTypes.UPDATE,
-      }
-    );
+    // await db.query(
+    //   "UPDATE celulares SET nome = :nome, preco = :preco, img = :img WHERE id = :id",
+    //   {
+    //     replacements: {
+    //       nome,
+    //       preco,
+    //       img,
+    //       id,
+    //     },
+    //     type: Sequelize.QueryTypes.UPDATE,
+    //   }
+    // );
 
     // let celular = celulares.find((cel) => cel.id == id);
     // celular.nome = nome;
@@ -129,14 +159,20 @@ module.exports = {
 
     res.redirect("/celulares");
   },
-
+  //------------------------------------------------------DELETAR CELULAR NO DB------------------------------------------------------//
   destroy: async (req, res) => {
     let { id } = req.params;
 
-    await db.query("DELETE FROM celulares WHERE id = :id", {
-      replacements: { id },
-      type: Sequelize.QueryTypes.DELETE,
+    await Celular.destroy({
+      where: {
+        id: id,
+      },
     });
+
+    // await db.query("DELETE FROM celulares WHERE id = :id", {
+    //   replacements: { id },
+    //   type: Sequelize.QueryTypes.DELETE,
+    // });
 
     // celulares.splice(
     //   celulares.findIndex((e) => e.id == id),
@@ -147,6 +183,8 @@ module.exports = {
 
     res.redirect("/celulares");
   },
+  //------------------------------------------------------FILTROS DELETADOS (MIGRADOS PARA UMA QUERY NA HOME)------------------------------------------------------//
+
   // priceFilter: async (req, res) => {
   //   let { max, order = null } = req.query;
 
@@ -255,15 +293,28 @@ module.exports = {
   //     });
   //   }
   // },
+
+  //------------------------------------------------------EXIBIR AGE DETALHES DE UM CELULAR------------------------------------------------------//
   detalhe: async (req, res) => {
+    let { max = 200000, order = "id-asc" } = req.query;
     let { id } = req.params;
 
     let celular = await Celular.findByPk(id);
 
-    res.render("detalhes", { celular });
+    res.render("detalhes", { celular, order, max });
   },
+  //------------------------------------------------------MÉTODO DE SEARCH CELULAR NO DB------------------------------------------------------//
   search: async (req, res) => {
     let { key, max = 200000, order = "id-asc", page = 1 } = req.query;
+
+    let cheapest = await Celular.min("preco"); // retorna o menor preco
+
+    // busca no DB o produto com o menor preco encontrado
+    let cheapestProduct = await Celular.findOne({
+      where: {
+        preco: cheapest,
+      },
+    });
 
     let classify = order.split("-");
 
@@ -299,6 +350,7 @@ module.exports = {
       totalPagina,
       order,
       key,
+      cheapestProduct,
     });
   },
 };

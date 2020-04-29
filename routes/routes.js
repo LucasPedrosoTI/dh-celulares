@@ -12,7 +12,7 @@ const admController = require("../controllers/admController");
 
 /* GET home page. */
 router.get("/", function (req, res, next) {
-  res.render("index", { title: "Express" });
+  res.redirect("/celulares");
 });
 
 router.get("/estudantes", estudanteController.index);
@@ -28,11 +28,13 @@ router.get("/celulares/search", celularController.search);
 router.get("/celulares/criar", auth, celularController.viewForm);
 router.post(
   "/celulares/criar",
+  [check("nome").isLength({ min: 1 }).withMessage("Deve conter um nome")],
   upload.any(),
   log.logDB,
   celularController.salvarForm
 );
 router.get("/celulares/:id/editar", auth, celularController.viewAttForm);
+
 router.put(
   "/celulares/:id/editar",
   [check("nome").isLength({ min: 1 }).withMessage("Deve conter um nome")],

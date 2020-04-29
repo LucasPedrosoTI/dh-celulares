@@ -1,24 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('parts/head', {title: celular.nome}) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        <%= celular.nome %>
-    </title>
-</head>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="/celulares?page=1">
+            <img src="/images/logo.png" alt="Pedrada Cel" width="40" height="40" class="d-inline-block mr-2"> Pedrada Celulares
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+        <div class="collapse navbar-collapse float-right d-flex justify-content-end" id="navbarSupportedContent">
 
-<body>
-    <h1>
-        <%= celular.nome %>
-    </h1>
-    <h3>
-        <%= celular.preco %>
-    </h3>
-    <img src="<%= celular.img %>" alt="<%= celular.nome %> ">
 
-    <a href="/celulares">Voltar</a>
-</body>
+            <form class="form-inline  my-2 my-lg-0" action="/celulares/search" method="get">
+                <div class="input-group">
+                    <input type="hidden" name="order" value="<%= order %>">
+                    <input type="hidden" name="max" value="<%= max %>">
+                    <input class="form-control mr-sm-2" type="search" name="key" id="search" placeholder="Pesquise um celular">
+                    <button class="btn btn-info my-2 my-sm-0" type="submit">Buscar</button>
+                </div>
+            </form>
 
-</html>
+        </div>
+    </nav>
+
+    <main class="bg-light vh-100">
+        <div class="container vh-100 bg-white">
+            <div class="w-50 m-auto">
+                <div class="w-100  text-center">
+                    <div class="my-5">
+                        <h1 class="d-inline">
+                            <%= celular.nome %>
+                        </h1>
+                        <h3 class="d-inline ml-5">
+                            <%= celular.preco %>
+                        </h3>
+                    </div>
+                    <img height="300" src="<%= celular.img %>" alt="<%= celular.nome %> ">
+                </div>
+
+                <div class="float-right my-5">
+                    <a class="btn btn-danger" href="/celulares">
+                        <svg class="bi bi-backspace" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" d="M6.603 2h7.08a1 1 0 011 1v10a1 1 0 01-1 1h-7.08a1 1 0 01-.76-.35L1 8l4.844-5.65A1 1 0 016.603 2zm7.08-1a2 2 0 012 2v10a2 2 0 01-2 2h-7.08a2 2 0 01-1.519-.698L.241 8.65a1 1 0 010-1.302L5.084 1.7A2 2 0 016.603 1h7.08z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd" d="M5.83 5.146a.5.5 0 000 .708l5 5a.5.5 0 00.707-.708l-5-5a.5.5 0 00-.708 0z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd" d="M11.537 5.146a.5.5 0 010 .708l-5 5a.5.5 0 01-.708-.708l5-5a.5.5 0 01.707 0z" clip-rule="evenodd"/>
+                  </svg> Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <%- include('parts/foot.ejs') %>

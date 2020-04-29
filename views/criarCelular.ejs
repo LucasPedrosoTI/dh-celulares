@@ -1,26 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('parts/head', {title: 'Novo Celular'}) %>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Criar celular</title>
-</head>
+    <div class="container bg-light rounded fadeInDown text-center">
 
-<body>
-    <h1>Criar celular</h1>
+        <div class="fadeIn first m-auto rounded-circle">
 
-    <form action="/celulares/criar" method="POST" enctype="multipart/form-data">
-        <input type="text" name="nome" placeholder="Nome" /><br /><br />
-        <input type="number" name="preco" id="preco" placeholder="Preço" />
-        <br /><br />
+            <svg class="bi bi-phone my-3" width=" 5em " height="5em " viewBox="0 0 16 16 " fill="currentColor " xmlns="http://www.w3.org/2000/svg ">
+                <path fill-rule="evenodd " d="M11 1H5a1 1 0 00-1 1v12a1 1 0 001 1h6a1 1 0 001-1V2a1 1 0 00-1-1zM5 0a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V2a2 2 0 00-2-2H5z " clip-rule="evenodd "/>
+                <path fill-rule="evenodd " d="M8 14a1 1 0 100-2 1 1 0 000 2z " clip-rule="evenodd "/>
+              </svg>
 
-        <h3>Imagem do Celular</h3>
-        <input type="file" name="imagem" id="imagem" />
+        </div>
 
-        <br /><br />
-        <button type="submit">Criar</button>
-    </form>
-</body>
+        <h1 class="mb-2">Criar celular</h1><br>
 
-</html>
+        <form class="w-50 m-auto text-center" action="/celulares/criar" method="POST" enctype="multipart/form-data">
+            <input class="form-control my-3 w-75 m-auto" type="text" name="nome" placeholder="Nome" required> <br>
+            <input class="form-control my-3 w-75 m-auto" type="number" name="preco" id="preco" placeholder="Preço" required>
+            <br>
+
+            <div class="custom-file w-75 m-auto text-center align-middle">
+                <input class="custom-file w-100 m-auto bg-light border border-info rounded align-middle" type="file" name="imagem" id="imagem" required>
+            </div>
+
+            <br>
+
+            <div class="my-3">
+                <button class="btn btn-info" type="submit">Criar</button>
+                <a class="btn btn-danger" href="/celulares">Cancelar</a>
+            </div>
+
+        </form>
+
+    </div>
+
+    <%- include('parts/foot.ejs') %>
